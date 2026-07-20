@@ -1,0 +1,14 @@
+# Datasets
+datasets/raw/
+datasets/processed/
+datasets/features/
+datasets/splits/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.env
