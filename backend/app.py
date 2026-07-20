@@ -11,10 +11,15 @@ try:
     from backend.analyzer.feature_extractor import extract_features
     from backend.analyzer.scoring_engine import score_url
     from backend.config import logger
+    from hybrid.engine import analyze_url
 except ImportError:  # pragma: no cover - supports `python app.py` from backend/
     from analyzer.feature_extractor import extract_features
     from analyzer.scoring_engine import score_url
     from config import logger
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from hybrid.engine import analyze_url
 
 API_NAME = "PhishScope API"
 API_VERSION = "0.3"
@@ -75,16 +80,14 @@ def analyze() -> Response | tuple[Response, int]:
         logger.warning("Analyze request rejected: URL is missing")
         return _error_response("URL is required.", 400)
 
-    features = extract_features(url)
-    if not features.get("valid"):
-        logger.warning("Analyze request rejected: invalid URL %s", url)
-        return _error_response("Invalid URL.", 400)
-
     benchmark = payload.get("benchmark") is True
-    result = score_url(features, benchmark=benchmark)
-    logger.info("URL: %s", features["url"])
-    logger.info("Score: %s", result["score"])
-    logger.info("Verdict: %s", result["verdict"])
+    result = analyze_url(url, benchmark=benchmark)
+    if "error" in result:
+        return _error_response(result["error"], 400)
+        
+    logger.info("URL: %s", url)
+    logger.info("Hybrid Score: %s", result["hybrid"]["score"])
+    logger.info("Hybrid Verdict: %s", result["hybrid"]["verdict"])
     return jsonify(result)
 
 

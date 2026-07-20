@@ -35,9 +35,11 @@ def _load_model() -> Any:
     return _MODEL_CACHE
 
 
-def _prepare_features(url: str) -> pd.DataFrame:
+def _prepare_features(url: str, features: dict[str, Any] | None = None) -> pd.DataFrame:
     """Extract features and prepare DataFrame for prediction."""
-    features = extract_features(url)
+    if features is None:
+        features = extract_features(url)
+        
     if not features.get("valid"):
         raise ValueError(f"Invalid URL: {url}")
         
@@ -53,11 +55,11 @@ def _prepare_features(url: str) -> pd.DataFrame:
     return pd.DataFrame([row_dict])
 
 
-def predict_url(url: str) -> dict[str, Any]:
+def predict_url(url: str, features: dict[str, Any] | None = None) -> dict[str, Any]:
     """Predict whether a URL is phishing or safe."""
     try:
         model = _load_model()
-        X = _prepare_features(url)
+        X = _prepare_features(url, features=features)
         
         prediction = model.predict(X)[0]
         if hasattr(model, "predict_proba"):
