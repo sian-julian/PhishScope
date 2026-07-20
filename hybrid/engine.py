@@ -24,6 +24,14 @@ from hybrid.confidence import calculate_confidence
 from hybrid.decision_tree import apply_rules
 from hybrid.utils import build_hybrid_response, calculate_hybrid_score, get_hybrid_verdict
 
+try:
+    from xai.explainer import get_shap_values
+    from xai.utils import get_top_features
+    from xai.formatter import format_explanation
+    from ml.scripts.predict import _prepare_features
+except ImportError:
+    pass
+
 
 def analyze_url(url: str, benchmark: bool = False) -> dict[str, Any]:
     """
@@ -100,5 +108,17 @@ def analyze_url(url: str, benchmark: bool = False) -> dict[str, Any]:
         result["hybrid"]["execution_time_ms"] = round(execution_time, 2)
         if execution_time > 50:
             logger.warning("Hybrid execution took >50ms (%.2fms)", execution_time)
+
+    # 5. XAI SHAP Explanation (Phase 7)
+    try:
+        if features.get("valid"):
+            X = _prepare_features(url, features=features)
+            shap_values, base_value = get_shap_values(X)
+            top_feats = get_top_features(shap_values[0], list(X.columns), top_n=3)
+            explanation = format_explanation(final_verdict, top_feats, level=3)
+            result["explanation"] = explanation
+    except Exception as e:
+        logger.error("Failed to generate XAI explanation: %s", e)
+        result["explanation"] = {"error": "Explanation unavailable"}
 
     return result

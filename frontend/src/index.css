@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-xl;
+  }
+}
+
+body {
+  background: radial-gradient(circle at 50% 0%, #1e3a8a 0%, #111827 50%, #111827 100%);
+  background-attachment: fixed;
+}
