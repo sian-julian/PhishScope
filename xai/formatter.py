@@ -1,6 +1,7 @@
 """Text formatter for XAI explanations."""
 
 from xai.utils import get_readable_feature_name
+from xai.human_explanations import get_human_explanation
 
 def format_explanation(verdict: str, top_features: list[dict], level: int = 3) -> dict:
     """
@@ -25,15 +26,12 @@ def format_explanation(verdict: str, top_features: list[dict], level: int = 3) -
         name = feat["name"]
         impact = feat["importance"]
         readable_name = get_readable_feature_name(name)
+        human_text = get_human_explanation(name, level="BASIC")
         
-        # Format the impact percentage string (e.g. "+24%")
-        # SHAP values represent log odds in TreeExplainer, but for human readability
-        # we often just scale them or show them directly. The prompt implies "+24%".
-        # We will just multiply by 100 and add a sign.
         impact_pct = f"{'+' if impact > 0 else ''}{int(round(impact * 100))}%"
         
         formatted_features.append({
-            "feature": name,
+            "feature": human_text,
             "impact": impact_pct
         })
         

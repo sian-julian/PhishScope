@@ -1,0 +1,4 @@
+URL,Previous Verdict,New Verdict,Confidence
+https://chatgpt.com/c/uuid,SUSPICIOUS,SAFE,VERY_HIGH
+https://github.com/microsoft/vscode,SUSPICIOUS,SAFE,VERY_HIGH
+https://youtube.com/watch?v=dQw4w9WgXcQ,SUSPICIOUS,SAFE,VERY_HIGH

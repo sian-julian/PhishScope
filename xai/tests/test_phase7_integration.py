@@ -2,24 +2,20 @@ import numpy as np
 import pandas as pd
 from unittest.mock import patch, MagicMock
 
-@patch("xai.explainer._load_model")
-def test_get_shap_values(mock_load):
-    mock_model = MagicMock()
-    mock_load.return_value = mock_model
+@patch("xai.explainer.get_explainer")
+def test_get_shap_values(mock_get_explainer):
+    mock_explainer = MagicMock()
+    mock_get_explainer.return_value = mock_explainer
+    # Return list of two arrays to mimic binary classifier
+    mock_explainer.shap_values.return_value = [np.array([[0.1, -0.2]]), np.array([[0.3, 0.4]])]
+    mock_explainer.expected_value = [0.0, 0.5]
     
-    with patch("shap.TreeExplainer") as mock_tree:
-        mock_explainer = MagicMock()
-        mock_tree.return_value = mock_explainer
-        # Return list of two arrays to mimic binary classifier
-        mock_explainer.shap_values.return_value = [np.array([[0.1, -0.2]]), np.array([[0.3, 0.4]])]
-        mock_explainer.expected_value = [0.0, 0.5]
-        
-        from xai.explainer import get_shap_values
-        df = pd.DataFrame([{"feat1": 1, "feat2": 2}])
-        shap_vals, base_val = get_shap_values(df)
-        
-        assert base_val == 0.5
-        assert shap_vals.tolist() == [[0.3, 0.4]]
+    from xai.explainer import get_shap_values
+    df = pd.DataFrame([{"feat1": 1, "feat2": 2}])
+    shap_vals, base_val = get_shap_values(df)
+    
+    assert base_val == 0.5
+    assert shap_vals.tolist() == [[0.3, 0.4]]
 
 @patch("hybrid.engine.extract_features")
 @patch("hybrid.engine.score_url")
@@ -42,5 +38,5 @@ def test_analyze_url_with_xai(mock_shap, mock_prepare, mock_predict, mock_score,
     explanation = result["explanation"]
     assert "summary" in explanation
     assert len(explanation["top_features"]) == 2
-    assert explanation["top_features"][0]["feature"] == "lookalike"
+    assert explanation["top_features"][0]["feature"] == "This website appears to imitate a trusted brand."
     assert explanation["top_features"][0]["impact"] == "+24%"

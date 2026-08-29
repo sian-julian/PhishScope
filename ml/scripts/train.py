@@ -26,7 +26,7 @@ from ml.scripts.common import (
     save_json,
 )
 
-NON_FEATURE_COLS = ["url", "source", "tld_risk_level", "brand_position", "lookalike_matched_brand", "label"]
+NON_FEATURE_COLS = ["url", "source", "tld_risk_level", "brand_position", "lookalike_matched_brand", "label", "host", "tld", "brand_found", "url_length_risk_level"]
 
 
 def load_training_data(path: Path) -> tuple[pd.DataFrame, pd.Series]:

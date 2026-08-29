@@ -1,0 +1,154 @@
+body {
+  background-color: #111827;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.warning-container {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 40px;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6), 0 0 60px rgba(239,68,68,0.1);
+}
+
+.icon-warning {
+  font-size: 56px;
+  color: #EF4444;
+  margin-bottom: 8px;
+}
+
+h1 {
+  color: #EF4444;
+  margin: 0 0 8px 0;
+  font-size: 26px;
+  letter-spacing: -0.5px;
+}
+
+.subtitle {
+  color: #D1D5DB;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.details-box {
+  background: rgba(0,0,0,0.35);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: left;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.detail-row {
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
+.label {
+  font-weight: bold;
+  color: #9CA3AF;
+  margin-right: 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.danger-text {
+  color: #EF4444;
+  font-weight: bold;
+}
+
+.reasons-section {
+  margin-top: 16px;
+}
+
+#reasons-list {
+  padding-left: 20px;
+  color: #D1D5DB;
+  list-style-type: disc;
+}
+
+#reasons-list li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.info-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.info-text {
+  color: #D1D5DB;
+  font-size: 13px;
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+}
+
+.info-text:last-of-type {
+  margin-bottom: 12px;
+}
+
+.recommend-text {
+  color: #F59E0B;
+  font-size: 14px;
+  margin: 0;
+}
+
+.recommend-text strong {
+  color: #FBBF24;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+button {
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background-color: #2563EB;
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:hover {
+  background-color: #3B82F6;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: #6B7280;
+  border: 1px solid #374151;
+  font-size: 13px;
+}
+
+.btn-outline:hover {
+  border-color: #6B7280;
+  color: #9CA3AF;
+}

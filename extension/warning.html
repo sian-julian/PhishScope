@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PhishScope Warning</title>
+  <link rel="stylesheet" href="warning.css">
+</head>
+<body>
+  <div class="warning-container">
+    <div class="icon-warning">⚠</div>
+    <h1>PhishScope Warning</h1>
+    <p class="subtitle">This website may be unsafe.</p>
+
+    <div class="details-box">
+      <div class="detail-row">
+        <span class="label">URL:</span>
+        <span class="value" id="target-url">...</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Confidence:</span>
+        <span class="value danger-text" id="target-confidence">...</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Risk Level:</span>
+        <span class="value danger-text" id="risk-level">HIGH</span>
+      </div>
+
+      <div class="reasons-section">
+        <span class="label">Reasons:</span>
+        <ul id="reasons-list">
+          <!-- Injected by warning.js -->
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <p class="info-text">Visiting this website may expose your personal information.</p>
+      <p class="info-text">PhishScope blocked this website to protect your device.</p>
+      <p class="recommend-text">Recommended Action: <strong>Leave this page.</strong></p>
+    </div>
+
+    <div class="actions">
+      <button id="btn-continue" class="btn-outline">Continue Anyway</button>
+      <button id="btn-back" class="btn-primary">Go Back</button>
+    </div>
+  </div>
+
+  <script src="warning.js"></script>
+</body>
+</html>

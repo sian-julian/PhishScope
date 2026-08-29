@@ -32,6 +32,13 @@ try:
 except ImportError:
     pass
 
+try:
+    from backend.utils.trusted_loader import is_trusted_domain
+except ImportError:
+    import sys
+    sys.path.append(str(Path(__file__).resolve().parents[1]))
+    from backend.utils.trusted_loader import is_trusted_domain
+
 
 def analyze_url(url: str, benchmark: bool = False) -> dict[str, Any]:
     """
@@ -39,6 +46,23 @@ def analyze_url(url: str, benchmark: bool = False) -> dict[str, Any]:
     """
     start_time = perf_counter()
     logger.info("Starting Hybrid Engine for: %s", url)
+
+    if is_trusted_domain(url):
+        logger.info("Trusted domain bypassed: %s", url)
+        logger.info("Decision source: trusted_domain")
+        return {
+            "hybrid": {
+                "verdict": "SAFE",
+                "confidence": "VERY_HIGH",
+                "score": 0,
+                "trusted_domain": True,
+                "decision_source": "trusted_domain"
+            },
+            "explanation": {
+                "summary": "This website belongs to a trusted organization.",
+                "top_features": []
+            }
+        }
 
     # 1. Feature Extraction & Heuristic Scoring (Phase 2)
     features = extract_features(url)
@@ -102,6 +126,11 @@ def analyze_url(url: str, benchmark: bool = False) -> dict[str, Any]:
         hybrid_confidence=final_confidence,
         reasons=reasons
     )
+
+    # Add decision metadata
+    result["hybrid"]["trusted_domain"] = False
+    result["hybrid"]["decision_source"] = "hybrid"
+    logger.info("Decision source: hybrid")
 
     if benchmark:
         execution_time = (perf_counter() - start_time) * 1000
