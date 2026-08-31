@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PhishScope — Suspicious Website</title>
+  <link rel="stylesheet" href="suspicious.css">
+</head>
+<body>
+  <div class="warning-container">
+    <div class="icon-warning">⚠</div>
+    <h1>Suspicious Website</h1>
+    <p class="subtitle">This website has been detected as potentially suspicious.</p>
+
+    <div class="details-box">
+      <div class="detail-row">
+        <span class="label">URL:</span>
+        <span class="value" id="target-url">...</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Confidence:</span>
+        <span class="value warning-text" id="target-confidence">...</span>
+      </div>
+
+      <div class="reasons-section">
+        <span class="label">Reasons:</span>
+        <ul id="reasons-list">
+          <!-- Injected by suspicious.js -->
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <p class="info-text">PhishScope detected potential indicators on this website.</p>
+      <p class="info-text">Exercise caution if you choose to continue.</p>
+    </div>
+
+    <div class="actions">
+      <button id="btn-continue" class="btn-outline">Continue</button>
+      <button id="btn-back" class="btn-primary">Go Back</button>
+    </div>
+  </div>
+
+  <script src="suspicious.js"></script>
+</body>
+</html>

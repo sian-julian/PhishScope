@@ -102,7 +102,7 @@ def analyze_url(url: str, benchmark: bool = False) -> dict[str, Any]:
     
     # 4. Apply Decision Rules
     override_verdict, override_confidence, reasons = apply_rules(
-        heuristic_verdict, ml_prediction, base_confidence
+        heuristic_verdict, ml_prediction, base_confidence, heuristic_score=heuristic_score
     )
     
     final_verdict = override_verdict if override_verdict else default_verdict

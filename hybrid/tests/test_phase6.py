@@ -37,8 +37,15 @@ def test_apply_rules_rule2():
     assert conf == "HIGH"
     assert "safe" in reasons[0]
 
-def test_apply_rules_rule3():
-    verdict, conf, reasons = apply_rules("SAFE", "PHISHING", "MEDIUM")
+def test_apply_rules_rule3_no_heuristic_signals():
+    # When heuristic score is 0, ML PHISHING alone should NOT promote to SUSPICIOUS
+    verdict, conf, reasons = apply_rules("SAFE", "PHISHING", "MEDIUM", heuristic_score=0)
+    assert verdict == "SAFE"
+    assert conf == "MEDIUM"
+
+def test_apply_rules_rule3_with_heuristic_signals():
+    # When heuristic score > 0, ML PHISHING should promote to SUSPICIOUS
+    verdict, conf, reasons = apply_rules("SAFE", "PHISHING", "MEDIUM", heuristic_score=15)
     assert verdict == "SUSPICIOUS"
     assert conf == "MEDIUM"
 

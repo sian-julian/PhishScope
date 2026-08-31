@@ -40,7 +40,11 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["warning.html", "warning.css", "warning.js"],
+      "resources": [
+        "warning.html", "warning.css", "warning.js",
+        "suspicious.html", "suspicious.css", "suspicious.js",
+        "analyzing.html", "analyzing.css", "analyzing.js"
+      ],
       "matches": ["<all_urls>"]
     }
   ]

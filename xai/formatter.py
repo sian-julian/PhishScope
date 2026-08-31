@@ -21,12 +21,17 @@ def format_explanation(verdict: str, top_features: list[dict], level: int = 3) -
     # Format top features array for JSON response
     formatted_features = []
     positive_indicators = []
+    seen_texts = set()
     
     for feat in top_features:
         name = feat["name"]
         impact = feat["importance"]
         readable_name = get_readable_feature_name(name)
         human_text = get_human_explanation(name, level="BASIC")
+        
+        if human_text in seen_texts:
+            continue
+        seen_texts.add(human_text)
         
         impact_pct = f"{'+' if impact > 0 else ''}{int(round(impact * 100))}%"
         

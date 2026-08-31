@@ -62,6 +62,72 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ success: true });
   }
 
+  if (request.action === "analyze_url_blocking" && request.url) {
+    console.log("[PhishScope] Background analyzing URL:", request.url);
+    analyzeURL(request.url).then(async (result) => {
+      if (!result || !result.hybrid) {
+        sendResponse({ success: false });
+        return;
+      }
+      
+      const verdict = result.hybrid.verdict;
+      await saveToHistory(request.url, verdict);
+
+      if (verdict === "SAFE") {
+        // Whitelist so we don't intercept again immediately (10 min TTL can be added later, keep simple now)
+        TEMP_WHITELIST.add(request.url);
+        const isTrustedDomain = result.hybrid.trusted_domain === true;
+        const toastType = isTrustedDomain ? 'trusted' : 'safe';
+        // We schedule toast for the sender tab
+        if (sender.tab && sender.tab.id) {
+          scheduleToast(sender.tab.id, toastType, request.url);
+        }
+        sendResponse({ success: true, verdict: "SAFE" });
+
+      } else if (verdict === "SUSPICIOUS") {
+        await chrome.storage.local.set({
+          phishscope_last_suspicious: {
+            url: request.url,
+            confidence: result.hybrid.confidence || "MEDIUM",
+            score: result.hybrid.score || 0,
+            reasons: result.explanation ? result.explanation.top_features : [],
+            summary: result.explanation ? result.explanation.summary : "This URL appears suspicious."
+          }
+        });
+        const suspiciousUrl = chrome.runtime.getURL(`suspicious.html?url=${encodeURIComponent(request.url)}`);
+        sendResponse({ success: true, verdict: "SUSPICIOUS", redirectUrl: suspiciousUrl });
+
+      } else if (verdict === "DANGEROUS") {
+        await chrome.storage.local.set({
+          phishscope_last_warning: {
+            url: request.url,
+            confidence: result.hybrid.confidence || "HIGH",
+            score: result.hybrid.score || 0,
+            reasons: result.explanation ? result.explanation.top_features : [],
+            summary: result.explanation ? result.explanation.summary : "This URL appears dangerous."
+          }
+        });
+        const warningUrl = chrome.runtime.getURL(`warning.html?url=${encodeURIComponent(request.url)}`);
+        
+        chrome.notifications.create({
+          type: "basic",
+          iconUrl: "icons/48.png",
+          title: "⚠ PhishScope Warning",
+          message: `Dangerous website blocked: ${new URL(request.url).hostname}`,
+          priority: 2
+        });
+        
+        sendResponse({ success: true, verdict: "DANGEROUS", redirectUrl: warningUrl });
+      } else {
+        sendResponse({ success: false });
+      }
+    }).catch(err => {
+      console.error("[PhishScope] Analyze API Error:", err.message);
+      sendResponse({ success: false });
+    });
+    return true; // Keep message channel open for async response
+  }
+
   return true;
 });
 
@@ -158,7 +224,7 @@ function scheduleToast(tabId, type, url) {
 }
 
 // ─── CORE: Navigation Interception ───────────────────────────────
-chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+chrome.webNavigation.onBeforeNavigate.addListener((details) => {
   if (details.frameId !== 0) return;
 
   const url = details.url;
@@ -171,79 +237,70 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
     url.startsWith('about:') ||
     url.startsWith('data:') ||
     url.startsWith('blob:') ||
-    url.startsWith('file://')
+    url.startsWith('file://') ||
+    url.startsWith('devtools://')
   ) {
     return;
   }
 
-  console.log("[PhishScope] URL intercepted:", url);
-
-  // Check in-memory whitelist (Continue Anyway ONLY)
+  // Check in-memory whitelist
   if (TEMP_WHITELIST.has(url)) {
-    console.log("[PhishScope] Whitelisted (Continue Anyway), allowing:", url);
+    console.log("[PhishScope] Whitelisted, allowing:", url);
     return;
   }
 
-  // ── Analyze via Flask API (single source of truth) ──
-  try {
-    console.log("[PhishScope] Analyzing URL:", url);
-    const result = await analyzeURL(url);
+  console.log("[PhishScope] URL intercepted synchronously:", url);
 
-    if (!result || !result.hybrid) {
-      console.warn("[PhishScope] No hybrid result for:", url);
-      return;
-    }
+  // ── Synchronously abort the original navigation ──
+  // By updating the tab immediately to our internal extension page,
+  // the browser aborts the HTTP request to the potentially malicious site.
+  // The actual analysis is requested by analyzing.js to the background script.
+  const analyzingUrl = chrome.runtime.getURL(
+    `analyzing.html?url=${encodeURIComponent(url)}`
+  );
+  
+  chrome.tabs.update(details.tabId, { url: analyzingUrl });
+});
 
-    const verdict = result.hybrid.verdict;
-    const isTrustedDomain = result.hybrid.trusted_domain === true;
-    const decisionSource = result.hybrid.decision_source || "hybrid";
-    
-    console.log("[PhishScope] Verdict:", verdict);
-    console.log("[PhishScope] Trusted domain:", isTrustedDomain);
-    console.log("[PhishScope] Decision source:", decisionSource);
+// ─── Catch Server-Side Redirects ─────────────────────────────────
+chrome.webNavigation.onCommitted.addListener((details) => {
+  if (details.frameId !== 0) return;
 
-    await saveToHistory(url, verdict);
+  const url = details.url;
 
-    if (verdict === "DANGEROUS") {
-      // ── DANGEROUS: Redirect to warning page ──
-      await chrome.storage.local.set({
-        phishscope_last_warning: {
-          url: url,
-          confidence: result.hybrid.confidence || "HIGH",
-          score: result.hybrid.score || 0,
-          reasons: result.explanation ? result.explanation.top_features : [],
-          summary: result.explanation ? result.explanation.summary : "This URL appears dangerous."
-        }
-      });
-
-      const warningUrl = chrome.runtime.getURL(
-        `warning.html?url=${encodeURIComponent(url)}`
-      );
-      chrome.tabs.update(details.tabId, { url: warningUrl });
-      console.log("[PhishScope] WARNING displayed. BLOCKED:", url);
-
-      chrome.notifications.create({
-        type: "basic",
-        iconUrl: "icons/48.png",
-        title: "⚠ PhishScope Warning",
-        message: `Dangerous website blocked: ${new URL(url).hostname}`,
-        priority: 2
-      });
-
-    } else if (verdict === "SAFE") {
-      // ── SAFE: Show appropriate toast ──
-      const toastType = isTrustedDomain ? 'trusted' : 'safe';
-      console.log("[PhishScope] SAFE, allowing:", url);
-      scheduleToast(details.tabId, toastType, url);
-
-    } else {
-      // ── SUSPICIOUS or other: Allow navigation, no toast ──
-      // The popup will show the real verdict if the user clicks the icon
-      console.log("[PhishScope] SUSPICIOUS, allowing without toast:", url);
-    }
-
-  } catch (err) {
-    console.error("[PhishScope] Auto-scan error:", err.message);
-    // On API failure, allow navigation (fail open)
+  // Skip internal/extension pages
+  if (
+    url.startsWith('chrome://') ||
+    url.startsWith('chrome-extension://') ||
+    url.startsWith('edge://') ||
+    url.startsWith('about:') ||
+    url.startsWith('data:') ||
+    url.startsWith('blob:') ||
+    url.startsWith('file://') ||
+    url.startsWith('devtools://')
+  ) {
+    return;
   }
+
+  // If the URL is whitelisted, we allow it to commit
+  if (TEMP_WHITELIST.has(url)) {
+    return;
+  }
+
+  console.log("[PhishScope] URL intercepted at onCommitted (Redirect):", url);
+
+  const analyzingUrl = chrome.runtime.getURL(
+    `analyzing.html?url=${encodeURIComponent(url)}`
+  );
+  
+  // Use executeScript to replace the history entry so the "Go Back" button works correctly
+  // and doesn't get trapped in a redirect loop.
+  chrome.scripting.executeScript({
+    target: { tabId: details.tabId },
+    func: (url) => { window.location.replace(url); },
+    args: [analyzingUrl]
+  }).catch(() => {
+    // Fallback if scripting fails
+    chrome.tabs.update(details.tabId, { url: analyzingUrl });
+  });
 });
