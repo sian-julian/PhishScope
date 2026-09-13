@@ -57,7 +57,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "go_back") {
     console.log("[PhishScope] Go Back clicked.");
     if (sender.tab && sender.tab.id) {
-      chrome.tabs.remove(sender.tab.id);
+      // Go back in history rather than closing the tab
+      chrome.tabs.goBack(sender.tab.id, () => {
+        if (chrome.runtime.lastError) {
+          // No history to go back to — open new tab page instead of closing
+          chrome.tabs.update(sender.tab.id, { url: 'chrome://newtab' });
+        }
+      });
     }
     sendResponse({ success: true });
   }

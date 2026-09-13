@@ -24,6 +24,9 @@ body {
   background: rgba(37, 99, 235, 0.1);
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logo {
@@ -32,17 +35,10 @@ body {
   gap: 8px;
 }
 
-.icon-shield {
-  width: 24px;
-  height: 24px;
-  color: var(--primary);
-}
-
-.logo h1 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+.logo-img {
+  height: 40px;
+  width: auto;
+  display: block;
 }
 
 .content {

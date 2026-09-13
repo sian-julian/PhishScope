@@ -36,6 +36,15 @@ SAFE_SCORE_MAX = 30
 SUSPICIOUS_SCORE_MAX = 60
 MAX_RISK_SCORE = 100
 
+# Phishing keyword detection in URL path/hostname
+PHISHING_KEYWORDS = frozenset({
+    "login", "verify", "account", "secure", "confirm", "update",
+    "signin", "billing", "password", "alert", "suspend", "validate",
+    "unlock", "authenticate", "credential", "recovery", "reset"
+})
+KEYWORD_THRESHOLD = 2      # how many keywords must appear before scoring
+KEYWORD_POINTS = 20        # points added when threshold is met
+
 TLD_RISK_POINTS = {
     "high": 15,
     "medium": 7,

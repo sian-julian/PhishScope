@@ -10,9 +10,9 @@ def calculate_hybrid_score(heuristic_score: float, ml_probability: float) -> int
 
 def get_hybrid_verdict(hybrid_score: int) -> str:
     """Determine the verdict based on hybrid score bands."""
-    if hybrid_score <= 30:
+    if hybrid_score <= 40:
         return "SAFE"
-    elif hybrid_score <= 60:
+    elif hybrid_score <= 65:
         return "SUSPICIOUS"
     else:
         return "DANGEROUS"

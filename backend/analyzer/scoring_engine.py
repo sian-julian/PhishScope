@@ -20,6 +20,9 @@ try:
         LOOKALIKE_POINTS,
         MAX_RISK_SCORE,
         MISSING_HTTPS_POINTS,
+        PHISHING_KEYWORDS,
+        KEYWORD_THRESHOLD,
+        KEYWORD_POINTS,
         SAFE_SCORE_MAX,
         SUBDOMAIN_POINTS,
         SUBDOMAIN_THRESHOLD,
@@ -42,6 +45,9 @@ except ImportError:  # pragma: no cover - supports `python -m analyzer...` from 
         LOOKALIKE_POINTS,
         MAX_RISK_SCORE,
         MISSING_HTTPS_POINTS,
+        PHISHING_KEYWORDS,
+        KEYWORD_THRESHOLD,
+        KEYWORD_POINTS,
         SAFE_SCORE_MAX,
         SUBDOMAIN_POINTS,
         SUBDOMAIN_THRESHOLD,
@@ -124,6 +130,15 @@ RULES: tuple[Rule, ...] = (
         lambda features: int(features.get("url_length", 0)) > LONG_URL_THRESHOLD,
         LONG_URL_POINTS,
         lambda features: f"URL exceeds {LONG_URL_THRESHOLD} characters.",
+    ),
+    (
+        # Count how many phishing keywords appear anywhere in the full URL
+        lambda features: sum(
+            1 for kw in PHISHING_KEYWORDS
+            if kw in features.get("url", "").lower()
+        ) >= KEYWORD_THRESHOLD,
+        KEYWORD_POINTS,
+        lambda features: "Multiple phishing keywords detected in URL (e.g. login, verify, account).",
     ),
 )
 

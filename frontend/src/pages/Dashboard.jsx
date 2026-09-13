@@ -1,108 +1,91 @@
-import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, LineChart, Line, CartesianGrid
-} from 'recharts';
-import StatsCard from '../components/StatsCard';
-import ChartCard from '../components/ChartCard';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import ResultCard from '../components/ResultCard';
+import ExplanationCard from '../components/ExplanationCard';
+import VerdictBadge from '../components/VerdictBadge';
 
+/* ============================================================
+   Dashboard — all existing sessionStorage logic preserved.
+   Only visual presentation changed.
+   ============================================================ */
 const Dashboard = () => {
-  // Mock Data as per prompt instructions
-  const stats = {
-    total: 150,
-    safe: 120,
-    suspicious: 10,
-    dangerous: 20,
-    avgConfidence: "96.4%"
-  };
+  const [latestAnalysis, setLatestAnalysis] = useState(null);
 
-  const pieData = [
-    { name: 'Safe', value: stats.safe, color: '#22C55E' },
-    { name: 'Suspicious', value: stats.suspicious, color: '#EAB308' },
-    { name: 'Dangerous', value: stats.dangerous, color: '#EF4444' },
-  ];
-
-  const featureData = [
-    { name: 'Lookalike', impact: 85 },
-    { name: 'Entropy', impact: 65 },
-    { name: 'Suspicious TLD', impact: 45 },
-    { name: 'Brand Mismatch', impact: 40 },
-  ];
-
-  const lineData = [
-    { day: 'Mon', analyzed: 12 },
-    { day: 'Tue', analyzed: 19 },
-    { day: 'Wed', analyzed: 15 },
-    { day: 'Thu', analyzed: 25 },
-    { day: 'Fri', analyzed: 22 },
-    { day: 'Sat', analyzed: 40 },
-    { day: 'Sun', analyzed: 17 },
-  ];
+  useEffect(() => {
+    const stored = sessionStorage.getItem('latestAnalysis');
+    if (stored) {
+      try {
+        setLatestAnalysis(JSON.parse(stored));
+      } catch (e) {
+        console.error('Failed to parse stored analysis', e);
+      }
+    }
+  }, []);
 
   return (
-    <div className="flex flex-col w-full max-w-7xl mx-auto py-8 space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Global Dashboard</h1>
-        <p className="text-gray-400">Real-time statistics from the PhishScope Hybrid Engine.</p>
+    <div className="w-full min-h-screen bg-ms">
+
+      {/* Page header */}
+      <div className="bg-si border-b border-si-700">
+        <div className="max-w-content mx-auto px-5 lg:px-8 py-14">
+          <p className="label-caps text-sv-light mb-4">Session Dashboard</p>
+          <h1 className="text-h-lg font-semibold text-sw mb-4">
+            Analysis Results
+          </h1>
+          <p className="text-body-lg text-ag max-w-xl">
+            PhishScope shows the most recent analysis from your current session. Historical data is not persisted.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatsCard title="Total URLs" value={stats.total} colorClass="border-blue-500" />
-        <StatsCard title="Safe" value={stats.safe} colorClass="border-green-500" />
-        <StatsCard title="Suspicious" value={stats.suspicious} colorClass="border-yellow-500" />
-        <StatsCard title="Dangerous" value={stats.dangerous} colorClass="border-red-500" />
-        <StatsCard title="Avg Confidence" value={stats.avgConfidence} colorClass="border-purple-500" />
-      </div>
+      <div className="max-w-content mx-auto px-5 lg:px-8 py-12">
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ChartCard title="Safe vs Dangerous Distribution">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={pieData}
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#fff' }}
-                itemStyle={{ color: '#fff' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard>
+        {/* Empty state */}
+        {!latestAnalysis ? (
+          <div className="surface-card py-20 flex flex-col items-center text-center">
+            <div
+              className="w-16 h-16 rounded-card-lg flex items-center justify-center mb-6"
+              style={{ background: '#f6f7fc' }}
+              aria-hidden="true"
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#999999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            </div>
+            <h2 className="text-h-sm font-semibold text-si mb-3">No analysis in this session yet</h2>
+            <p className="text-body text-cg max-w-md mb-8">
+              Run an analysis in the Analyzer and your results will appear here. Results are kept in your browser session only.
+            </p>
+            <Link to="/analyzer" className="btn-primary">
+              Go to Analyzer
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-6 animate-ps-enter">
 
-        <ChartCard title="Top Global Phishing Indicators">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={featureData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <XAxis type="number" hide />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF'}} width={120} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#fff' }}
-                cursor={{fill: 'rgba(255,255,255,0.05)'}}
-              />
-              <Bar dataKey="impact" fill="#EF4444" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+            {/* Session banner */}
+            <div className="surface-card px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div>
+                  <p className="label-caps mb-1">Analyzed URL</p>
+                  <p className="text-body font-mono text-si break-all">{latestAnalysis.url}</p>
+                </div>
+                {latestAnalysis.data?.hybrid?.verdict && (
+                  <VerdictBadge verdict={latestAnalysis.data.hybrid.verdict} size="default" />
+                )}
+              </div>
+              <Link to="/analyzer" className="btn-secondary text-body-sm shrink-0">
+                New Analysis
+              </Link>
+            </div>
 
-        <ChartCard title="URLs Analyzed (7 Days)">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={lineData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-              <XAxis dataKey="day" stroke="#9CA3AF" tickLine={false} />
-              <YAxis stroke="#9CA3AF" tickLine={false} axisLine={false} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#fff' }}
-              />
-              <Line type="monotone" dataKey="analyzed" stroke="#2563EB" strokeWidth={3} dot={{r: 4, fill: '#2563EB'}} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
+            <ResultCard result={latestAnalysis.data} />
+
+            {latestAnalysis.data.explanation && !latestAnalysis.data.explanation.error && (
+              <ExplanationCard explanation={latestAnalysis.data.explanation} />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

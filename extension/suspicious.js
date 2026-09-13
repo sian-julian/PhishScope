@@ -55,12 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── Go Back ──
+  // Always delegate to background.js which uses chrome.tabs.goBack.
+  // Using window.history.back() here would only go back to analyzing.html,
+  // not to the real page the user was on before the interception.
   document.getElementById('btn-back').addEventListener('click', () => {
     console.log("[PhishScope] Go Back clicked on suspicious page.");
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      chrome.runtime.sendMessage({ action: "go_back" });
-    }
+    chrome.runtime.sendMessage({ action: "go_back" });
   });
 });

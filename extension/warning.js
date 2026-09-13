@@ -89,17 +89,15 @@ document.addEventListener('DOMContentLoaded', () => {
   btnBack.addEventListener('click', (e) => {
     e.preventDefault();
     if (confirmationStep > 0) {
-      // If in a confirmation step, go back to previous step
+      // If in a confirmation step, cancel back to the warning page
       confirmationStep = 0;
       hideConfirmation();
       console.log("[PhishScope] Confirmation cancelled. Back to warning page.");
     } else {
+      // Always delegate to background.js (chrome.tabs.goBack).
+      // window.history.back() would only return to analyzing.html.
       console.log("[PhishScope] Go Back clicked.");
-      if (window.history.length > 1) {
-        window.history.back();
-      } else {
-        chrome.runtime.sendMessage({ action: "go_back" });
-      }
+      chrome.runtime.sendMessage({ action: "go_back" });
     }
   });
 
