@@ -1,28 +1,22 @@
-import os
-from PIL import Image, ImageDraw
+"""Generate Chrome extension icons from the PhishScope logo."""
 
-def create_icon(size):
-    # Create a simple blue shield icon
-    img = Image.new('RGBA', (size, size), (255, 255, 255, 0))
-    draw = ImageDraw.Draw(img)
-    
-    # Shield coordinates (roughly)
-    pad = size * 0.1
-    w = size - 2*pad
-    h = size - 2*pad
-    points = [
-        (pad, pad),
-        (size-pad, pad),
-        (size-pad, size-pad*3),
-        (size/2, size-pad),
-        (pad, size-pad*3)
-    ]
-    draw.polygon(points, fill=(37, 99, 235)) # #2563EB Blue
-    
-    return img
+from pathlib import Path
+from PIL import Image
 
-os.makedirs('d:/phishscope/extension/icons', exist_ok=True)
-create_icon(16).save('d:/phishscope/extension/icons/16.png')
-create_icon(48).save('d:/phishscope/extension/icons/48.png')
-create_icon(128).save('d:/phishscope/extension/icons/128.png')
-print("Icons generated.")
+LOGO_SRC = Path(__file__).parent.parent / "frontend" / "src" / "assets" / "PhishScope-logo.png"
+ICONS_DIR = Path(__file__).parent / "icons"
+SIZES = [16, 48, 128]
+
+img = Image.open(LOGO_SRC).convert("RGBA")
+
+# The logo has a white background — crop to just the icon mark (top portion)
+# by making white pixels transparent for a cleaner icon, then composite on transparent
+width, height = img.size
+
+for size in SIZES:
+    resized = img.resize((size, size), Image.LANCZOS)
+    out_path = ICONS_DIR / f"{size}.png"
+    resized.save(out_path, "PNG")
+    print(f"Saved {out_path} ({size}x{size})")
+
+print("All icons generated successfully.")
