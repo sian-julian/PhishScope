@@ -14,33 +14,90 @@ document.addEventListener('DOMContentLoaded', async () => {
       throw new Error("No active tab found");
     }
     
-    const url = tabs[0].url;
-    console.log("[PhishScope Popup] Analyzing current tab:", url);
-    
-    // Ignore chrome:// or internal URLs
-    if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('edge://') || url.startsWith('about:')) {
+    const tabUrl = tabs[0].url;
+    console.log("[PhishScope Popup] Current tab URL:", tabUrl);
+
+    // ── Handle extension warning/suspicious/analyzing pages ────────────────
+    // When the user is on one of our interstitial pages, show the cached result
+    // instead of saying "cannot analyze internal browser pages".
+    if (tabUrl.startsWith('chrome-extension://')) {
+      const extUrl = new URL(tabUrl);
+      const page = extUrl.pathname; // e.g. /warning.html, /suspicious.html
+
+      if (page.includes('warning.html') || page.includes('suspicious.html')) {
+        const targetUrl = extUrl.searchParams.get('url') || 'Unknown URL';
+        urlText.textContent = targetUrl;
+
+        const cacheKey = page.includes('warning.html')
+          ? 'phishscope_last_warning'
+          : 'phishscope_last_suspicious';
+
+        const cached = await chrome.storage.local.get([cacheKey]);
+        const data = cached[cacheKey];
+
+        if (data) {
+          const verdict = page.includes('warning.html') ? 'DANGEROUS' : 'SUSPICIOUS';
+          // Build a synthetic result object matching renderResults() expectations
+          renderResults({
+            hybrid: {
+              verdict,
+              confidence: data.confidence || 'HIGH',
+              score: data.score || 0,
+              trusted_domain: false,
+              decision_source: 'hybrid'
+            },
+            explanation: {
+              summary: data.summary || 'This URL was flagged by PhishScope.',
+              top_features: Array.isArray(data.reasons)
+                ? data.reasons.map(r => ({
+                    feature: typeof r === 'string' ? r : (r.feature || String(r)),
+                    impact: verdict === 'DANGEROUS' ? '+high risk' : '+moderate risk'
+                  }))
+                : []
+            }
+          });
+        } else {
+          // Cached data not found — show verdict based on page type
+          const verdict = page.includes('warning.html') ? 'DANGEROUS' : 'SUSPICIOUS';
+          renderResults({
+            hybrid: { verdict, confidence: 'HIGH', score: 0, trusted_domain: false, decision_source: 'hybrid' },
+            explanation: { summary: 'This URL was flagged by PhishScope.', top_features: [] }
+          });
+        }
+        return;
+      }
+
+      // Any other extension page (popup itself, analyzing, etc.)
+      urlText.textContent = "Extension Page";
+      showError("Open a website to analyze it.");
+      return;
+    }
+
+    // ── Standard chrome:// / edge:// / about: pages ────────────────────────
+    if (tabUrl.startsWith('chrome://') || tabUrl.startsWith('edge://') || tabUrl.startsWith('about:') || tabUrl.startsWith('file://')) {
       urlText.textContent = "Internal Browser Page";
       showError("Cannot analyze internal browser pages.");
       return;
     }
     
-    urlText.textContent = url;
+    urlText.textContent = tabUrl;
     loadingState.classList.remove('hidden');
 
-    const result = await analyzeURL(url);
+    const result = await analyzeURL(tabUrl);
     
     console.log("[PhishScope Popup] API result:", result.hybrid.verdict);
     console.log("[PhishScope Popup] Decision source:", result.hybrid.decision_source || "hybrid");
     
     loadingState.classList.add('hidden');
     renderResults(result);
-    saveToHistory(url, result.hybrid.verdict);
+    saveToHistory(tabUrl, result.hybrid.verdict);
 
   } catch (error) {
     loadingState.classList.add('hidden');
     showError(error.message);
   }
 });
+
 
 function renderResults(result) {
   const resultsState = document.getElementById('results');
